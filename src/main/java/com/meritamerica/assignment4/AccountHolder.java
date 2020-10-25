@@ -1,10 +1,7 @@
 package com.meritamerica.assignment4;
+import java.util.Arrays;
 
-
-import com.meritamerica.assignment4.CDAccount;
-import com.meritamerica.assignment4.CDOffering;
-import com.meritamerica.assignment4.CheckingAccount;
-import com.meritamerica.assignment4.SavingsAccount;
+import java.text.ParseException;
 
 public class AccountHolder implements Comparable<AccountHolder> {
 
@@ -12,14 +9,12 @@ public class AccountHolder implements Comparable<AccountHolder> {
 	private String myMiddleName;
 	private String myLastName;
 	private String mySsn;
-	private CheckingAccount[] checkingAccountList;
-	private SavingsAccount[] savingsAccountList;
-	private CDAccount[] cdAccountList;
-	private final double CHECKING_ACCOUNT_INTEREST_RATE = 0.0001;
-	private final double SAVINGS_ACCOUNT_INTEREST_RATE = 0.01;
+	private CheckingAccount[] checkingAccount;
+	private SavingsAccount[] savingsAccount;
+	private CDAccount[] cdAccount;
 	private final double COMBINED_BALANCE_LIMIT = 250000;
 
-	//1. AccountHolder(String firstName, String middleName, String lastName, String ssn)
+	//AccountHolder(String firstName, String middleName, String lastName, String ssn)
 	
 	public AccountHolder(String myFirstName, String myMiddleName, String myLastName, String mySsn) {
 		
@@ -27,273 +22,321 @@ public class AccountHolder implements Comparable<AccountHolder> {
 		this.myMiddleName = myMiddleName;
 		this.myLastName = myLastName;
 		this.mySsn = mySsn;
-		this.checkingAccountList = null;
-		this.savingsAccountList = null;
+		this.checkingAccount = null;
+		this.savingsAccount = null;
 
 	}
-	//2.Sting getFirstName()	
+	//Sting getFirstName()	
 	public String getFirstName() {
 		return myFirstName;
 	}
 
-	//3.void setFirstName()	
+	//void setFirstName()	
 	public void setFirstName(String firstName) {
 		myFirstName = firstName;
 	}
 
-	//4.String getMiddleName()	
+	//String getMiddleName()	
 	public String getMiddleName() {
 		return myMiddleName;
 	}
 	
-	//5.void setMiddleName()
+	//void setMiddleName()
 	public void setMiddleName(String middleName) {
 		myMiddleName = middleName;
 	}
 
-	//6.String getLastName()
+	//String getLastName()
 	public String getLastName() {
 		return myLastName;
 	}
 
-	//7.void setLastName()	
+	//void setLastName()	
 	public void setLastName(String lastName) {
 		myLastName = lastName;
 	}
 	
-	//8.String getSSN()	
+	//String getSSN()	
 	public String getSSN() {
 		return mySsn;
 	}
 
-	//9.void setSSN()	
+	//void setSSN()	
 	public void setSSN(String ssn) {
 		mySsn = ssn;
 	}
 
-	//	10. CheckingAccount addCheckingAccount(double openingBalance)
-	public CheckingAccount addCheckingAccount(double openingBalance) {
-		if (getCheckingBalance() + getSavingsBalance() + openingBalance > COMBINED_BALANCE_LIMIT || openingBalance < 0) {
-			return null;
-		} else {
-			if (checkingAccountList == null) {
-				checkingAccountList = new CheckingAccount[1];
-				
-				checkingAccountList[0] = new CheckingAccount(openingBalance, CHECKING_ACCOUNT_INTEREST_RATE);
-			} else {
-				CheckingAccount[] tempCheckingAccount = new CheckingAccount[checkingAccountList.length + 1];
-				for (int i = 0; i < checkingAccountList.length; i++) {
-					tempCheckingAccount[i] = checkingAccountList[i];
-				}
-				tempCheckingAccount[checkingAccountList.length] = new CheckingAccount(openingBalance, CHECKING_ACCOUNT_INTEREST_RATE);
-				checkingAccountList = tempCheckingAccount;
-			}
-			
-			return checkingAccountList[checkingAccountList.length -1];
+	//CheckingAccount addCheckingAccount(double openingBalance)
+	public CheckingAccount addCheckingAccount(double openingBalance) throws ExceedsFraudSuspicionLimitException, 
+	ExceedsCombinedBalanceLimitException, NegativeAmountException, ParseException
+	{
+		if (getCheckingBalance() + getSavingsBalance() + openingBalance > COMBINED_BALANCE_LIMIT) 
+		{
+			throw new ExceedsCombinedBalanceLimitException("Balance of accounts exceeds $250,000.");
 		}
-	}
-	//	11. CheckingAccount addCheckingAccount(CheckingAccount checkingAccount)
-	public CheckingAccount addCheckingAccount(CheckingAccount checkingAccount) {
-		if (getCheckingBalance() + getSavingsBalance() + checkingAccount.getBalance() > COMBINED_BALANCE_LIMIT) {
-			return null;
-		} else {
-			if (checkingAccountList == null) {
-				checkingAccountList = new CheckingAccount[1];
-				checkingAccountList[0] = checkingAccount;
-			} else {
-				CheckingAccount[] tempCheckingAccount = new CheckingAccount[checkingAccountList.length + 1];
-				for (int i = 0; i < checkingAccountList.length; i++) {
-					tempCheckingAccount[i] = checkingAccountList[i];
-				}
-				tempCheckingAccount[checkingAccountList.length] = checkingAccount;
-				checkingAccountList = tempCheckingAccount;
+			CheckingAccount newAccount = new CheckingAccount(openingBalance);
+		
+			DepositTransaction transaction = new DepositTransaction(newAccount, openingBalance);
+			try{
+				MeritBank.processTransaction(transaction);
 			}
+			catch(Exception exception)
+			{
+				exception.printStackTrace();
+			}
+		
 			
-			return checkingAccountList[checkingAccountList.length -1];
+			CheckingAccount[] holding = new CheckingAccount[this.checkingAccount.length + 1];
+			for(int i = 0; i<this.checkingAccount.length; i++)
+			{
+				holding[i] = this.checkingAccount[i];
+			}
+		
+			holding[holding.length - 1] = newAccount;
+			this.checkingAccount = holding;
+		
+		
+			return newAccount;
 		}
+		
+
+	//	CheckingAccount addCheckingAccount(CheckingAccount checkingAccount)
+	public CheckingAccount addCheckingAccount(CheckingAccount checkingAccount) throws ExceedsFraudSuspicionLimitException, 
+		ExceedsCombinedBalanceLimitException, NegativeAmountException, ParseException
+	{
+		if(getCheckingBalance() + getSavingsBalance() + checkingAccount.getBalance() >= 250000) {
+			throw new ExceedsCombinedBalanceLimitException("Aggregate balance of your Checking and Savings accounts exceeds $250,000.");
+		}
+		CheckingAccount newAccount = new CheckingAccount(checkingAccount.getBalance());
+		
+		DepositTransaction transaction = new DepositTransaction(newAccount, checkingAccount.getBalance());
+		
+		try{
+			MeritBank.processTransaction(transaction);
+		}
+		catch(Exception exception) 
+		{
+			exception.printStackTrace();
+		}
+		
+		
+		
+		CheckingAccount[] holding = new CheckingAccount[this.checkingAccount.length + 1];
+		for(int i = 0; i<this.checkingAccount.length; i++) {
+			holding[i] = this.checkingAccount[i];
+		}
+		holding[holding.length - 1] = newAccount;
+		this.checkingAccount = holding;
+		return newAccount;
 	}
 
-	//12. CheckingAccount[] getCheckingAccounts()
+
+	//CheckingAccount[] getCheckingAccounts()
 	public CheckingAccount[] getCheckingAccounts() {
-		return checkingAccountList;
+		return checkingAccount;
 	}
 	
-	//13. int getNumberOfCheckingAccounts()
+	//getNumberOfCheckingAccounts()
 	public int getNumberOfCheckingAccounts() {
-		if (checkingAccountList == null) {
+		if (checkingAccount == null) {
 			return 0;
 		}
 		else {
-			return checkingAccountList.length;
+			return checkingAccount.length;
 		}
 	}
-	//14. double getCheckingBalance()
+	//double getCheckingBalance()
 	public double getCheckingBalance() {
 		double totalBalance = 0.0;
 
-		if (checkingAccountList != null) {
-			for (int i=0; i < checkingAccountList.length; i++) {
-				totalBalance += checkingAccountList[i].getBalance();
+		if (checkingAccount != null) {
+			for (int i=0; i < checkingAccount.length; i++) {
+				totalBalance += checkingAccount[i].getBalance();
 			}
 		} 
 		
 		return totalBalance;
 	}
-	//15. SavingsAccount addSavingsAccount(double openingBalance)
-	public SavingsAccount addSavingsAccount(double openingBalance) {
-		if (getCheckingBalance() + getSavingsBalance() + openingBalance > COMBINED_BALANCE_LIMIT || openingBalance < 0) {
-			return null;
-		} else {
-			if (savingsAccountList == null) {
-				savingsAccountList = new SavingsAccount[1];
-				
-				savingsAccountList[0] = new SavingsAccount(openingBalance, SAVINGS_ACCOUNT_INTEREST_RATE);
-			} else {
-				SavingsAccount[] tempSavingsAccount = new SavingsAccount[savingsAccountList.length + 1];
-				for (int i = 0; i < savingsAccountList.length; i++) {
-					tempSavingsAccount[i] = savingsAccountList[i];
-				}
-				tempSavingsAccount[savingsAccountList.length] = new SavingsAccount(openingBalance, SAVINGS_ACCOUNT_INTEREST_RATE);
-				savingsAccountList = tempSavingsAccount;
-			}
-			return savingsAccountList[savingsAccountList.length - 1];
+	//SavingsAccount addSavingsAccount(double openingBalance)
+public SavingsAccount addSavingsAccount(double openingBalance) throws ExceedsFraudSuspicionLimitException, NegativeAmountException, ExceedsCombinedBalanceLimitException {
+		
+		if(getCheckingBalance() + getSavingsBalance() + openingBalance >= 250000) {
+			throw new ExceedsCombinedBalanceLimitException("Aggregate balance of your Checking and Savings accounts exceeds $250,000.");
 		}
-	}
-	
-	
-	//16. SavingsAccount addSavingsAccount(SavingsAccount savingsAccount)
-	public SavingsAccount addSavingsAccount(SavingsAccount savingsAccount) {
-		if (getCombinedBalance() + savingsAccount.getBalance() > COMBINED_BALANCE_LIMIT) {
-			return null;
-		} else {
-			if (savingsAccountList == null) {
-				savingsAccountList = new SavingsAccount[1];
-				
-				savingsAccountList[0] = savingsAccount;			
-			} else {
-				SavingsAccount[] tempSavingsAccount = new SavingsAccount[savingsAccountList.length +1];
-				for (int i = 0; i < savingsAccountList.length; i++) {
-					tempSavingsAccount[i] = savingsAccountList[i];
-				}
-				tempSavingsAccount[savingsAccountList.length] = savingsAccount;
-				savingsAccountList = tempSavingsAccount;
-			}
-			return savingsAccountList[savingsAccountList.length - 1];
+		SavingsAccount newAccount = new SavingsAccount(openingBalance);
+		
+		DepositTransaction transaction = new DepositTransaction(newAccount, openingBalance);
+		
+		try{
+			MeritBank.processTransaction(transaction);
 		}
+		catch(Exception exception) {
+			exception.printStackTrace();
+		}
+		
+		
+		SavingsAccount[] holding = new SavingsAccount[savingsAccount.length + 1];
+		for(int i = 0; i<savingsAccount.length; i++) {
+			holding[i] = savingsAccount[i];
+		}
+		holding[holding.length - 1] = newAccount;
+		savingsAccount = holding;
+		return newAccount;
 	}
+
 	
-	//17. SavingsAccount[]getSavingsAccounts()
+	
+	//SavingsAccount addSavingsAccount(SavingsAccount savingsAccount)
+	public SavingsAccount addSavingsAccount(SavingsAccount savingsAccount) throws ExceedsFraudSuspicionLimitException, 
+	NegativeAmountException, ExceedsCombinedBalanceLimitException 
+	{
+		if(getCheckingBalance() + getSavingsBalance() + savingsAccount.getBalance()>= 250000) 
+		{
+			throw new ExceedsCombinedBalanceLimitException("Aggregate balance of your Checking and Savings accounts exceeds $250,000.");
+		}
+		DepositTransaction transaction = new DepositTransaction(savingsAccount, savingsAccount.getBalance());
+			try{
+				MeritBank.processTransaction(transaction);
+				}
+					catch(Exception exception) {
+		
+			}
+	
+	SavingsAccount[] holding = new SavingsAccount[this.savingsAccount.length + 1];
+	for(int i = 0; i<this.savingsAccount.length; i++) {
+		holding[i] = this.savingsAccount[i];
+	}
+	holding[holding.length - 1] = savingsAccount;
+	this.savingsAccount = holding;
+	return savingsAccount;
+}
+	
+	//SavingsAccount[]getSavingsAccounts()
 	public SavingsAccount[] getSavingsAccounts(){
-		return savingsAccountList;
+		return savingsAccount;
 	}
-	//18. int getNumberOfSavingsAccounts()
+	//getNumberOfSavingsAccounts()
 	public int getNumberOfSavingsAccounts() {
-		if (savingsAccountList != null) {
-			return savingsAccountList.length;
+		if (savingsAccount != null) {
+			return savingsAccount.length;
 		} else {
 			return 0;
 		}
 	}
-	//19. double getSavingsBalance()
+	//double getSavingsBalance()
 	public double getSavingsBalance() {
 		double totalBalance = 0.0; 
 
-		if (savingsAccountList != null) {
-			for (int i = 0 ; i < savingsAccountList.length ; i++) {
-				totalBalance += savingsAccountList[i].getBalance();
+		if (savingsAccount != null) {
+			for (int i = 0 ; i < savingsAccount.length ; i++) {
+				totalBalance += savingsAccount[i].getBalance();
 			}
 		}
 		
 		return totalBalance;
 	}
 
-	//20. CDAccount addCDAccount(CDOffering offering, double openingBalance)
-	public void addCDAccount(CDOffering offering, double openingBalance){
-		if (offering != null && openingBalance >= 0) {
-			if (cdAccountList == null) {
-				cdAccountList = new CDAccount[1];
-				cdAccountList[0] = new CDAccount(offering, openingBalance);
-			} else {
-				CDAccount[] tempCDAccount = new CDAccount[cdAccountList.length + 1];
-				for ( int i=0; i < cdAccountList.length; i++) {
-					cdAccountList[i] = tempCDAccount[i];
-				}
-				tempCDAccount[cdAccountList.length] = new CDAccount(offering, openingBalance);
-				cdAccountList = tempCDAccount;
-			}
+	// CDAccount addCDAccount(CDOffering offering, double openingBalance)
+	public CDAccount addCDAccount(CDOffering offering, double openingBalance) throws NegativeAmountException, 
+	ExceedsFraudSuspicionLimitException, ParseException {
+		
+	
+		if(offering == null) 
+		{
+			return null;
 		}
+		CDAccount newAccount = new CDAccount(offering, openingBalance);
+		DepositTransaction transaction = new DepositTransaction(newAccount, openingBalance);
+		
+		try{
+			MeritBank.processTransaction(transaction);
+		}
+		catch(Exception exception) 
+		{
+			
+		}
+		
+		
+		CDAccount[] holding = Arrays.copyOf(cdAccount, cdAccount.length+1);
+		
+		for(int i = 0; i<cdAccount.length; i++) {
+			holding[i] = cdAccount[i];
+		}
+		holding[holding.length - 1] = newAccount;
+		cdAccount = holding;
+		return newAccount;
 	}
 
-	//21. CDAccount addCDAccount(CDAccount cdAccount)
-	public void addCDAccount(CDAccount cdAccount) {
-		if (cdAccountList == null) {
-			cdAccountList = new CDAccount[1];
-			cdAccountList[0] = cdAccount;
-		} else {
-			CDAccount[] tempCdAccount = new CDAccount[cdAccountList.length + 1];
-			for (int i = 0; i < cdAccountList.length; i++) {
-				tempCdAccount[i] = cdAccountList[i];
-			}
-			tempCdAccount[cdAccountList.length] = cdAccount;
-			cdAccountList = tempCdAccount;
+	
+	public CDAccount addCDAccount(CDAccount cdAccount) throws ExceedsFraudSuspicionLimitException, NegativeAmountException {
+		
+		DepositTransaction transaction = new DepositTransaction(cdAccount, cdAccount.getBalance());
+		try{
+			MeritBank.processTransaction(transaction);
 		}
+		catch(Exception exception) {
+			
+		}
+		CDAccount[] holding = Arrays.copyOf(this.cdAccount,this.cdAccount.length+1);
+		for(int i = 0; i<this.cdAccount.length; i++) {
+			holding[i] = this.cdAccount[i];
+		}
+		holding[holding.length - 1] = cdAccount;
+		this.cdAccount = holding;
+		return cdAccount;
 	}
 
-	//22. CDAccount[] getCDACcounts()
+
+	//CDAccount[] getCDACcounts()
 	public CDAccount[] getCDAccounts() {
-		return cdAccountList;
+		return cdAccount;
 	}
 
-	//23. int getNumberOfCDAccounts()
-	public int getNumberOfCDAccounts() {
-		if (cdAccountList != null) {
-			return cdAccountList.length;
+	//getNumberOfCDAccounts()
+	public int getNumberofCDAccounts() {
+		if (cdAccount != null) {
+			return cdAccount.length;
 		} else {
 			return 0;
 		}
 	}
 
-	//24. double getCDBalance()
+	//double getCDBalance()
 	public double getCDBalance() {
 		double totalCdBalance = 0.0;
 
-		if (cdAccountList != null) {
-			for (int i = 0; i < cdAccountList.length; i++){
-				totalCdBalance += cdAccountList[i].getBalance();
+		if (cdAccount != null) {
+			for (int i = 0; i < cdAccount.length; i++){
+				totalCdBalance += cdAccount[i].getBalance();
 			}
 		}
 
 		return totalCdBalance;
 	}
 	
-	//25. double getCombinedBalance()
+	//double getCombinedBalance()
 	public double getCombinedBalance(){
 		return getCheckingBalance() + getSavingsBalance() + getCDBalance();
 	}
-	//implement the compareTo(AccountHolder otherAccountHolder) method
+
 	@Override
 	public int compareTo(AccountHolder otherAccountHolder) {
-		if (this.getCombinedBalance() > otherAccountHolder.getCombinedBalance())
-			return 1;
-		else if (this.getCombinedBalance() < otherAccountHolder.getCombinedBalance())
-			return -1;
-		else
+		if(getCombinedBalance() == otherAccountHolder.getCombinedBalance()) {
 			return 0;
+		} else if (getCombinedBalance() > otherAccountHolder.getCombinedBalance()) {
+			return 1;
+		} else {
+			return -1;
+		}
 	}
 
-	//String writeToString()
-	public String writeToString() {
-		String returnStr = "";
-		returnStr += this.myLastName + "," + this.myMiddleName + "," + this.myFirstName + "," + this.mySsn;
-				
-		return returnStr;
+	public String writeToString(){
+		return myFirstName+","+myMiddleName+","+myLastName+","+mySsn;
 	}
-	
+
 	public static AccountHolder readFromString(String accountHolderInfo) {
 		String[] accountinfo = accountHolderInfo.split(",");
-		AccountHolder accountHolder = new AccountHolder(accountinfo[2], accountinfo[1], accountinfo[0], accountinfo[3]);
+		AccountHolder accountHolder = new AccountHolder(accountinfo[0], accountinfo[1], accountinfo[2], accountinfo[3]);
 		return accountHolder;
 	}
-	
-	
 }

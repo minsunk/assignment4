@@ -3,11 +3,9 @@ package com.meritamerica.assignment4;
 import java.text.*;
 import java.util.*;
 
-//import com.meritamerica.assignment2.MeritBank;
 
-//import com.meritamerica.assignment2.MeritBank;
 
-public class BankAccount {
+public abstract class BankAccount {
 	
 	protected double balance;
 	protected double interestRate;
@@ -15,39 +13,24 @@ public class BankAccount {
 	protected Date openDate;
 	private final static double DEFAULT_INTEREST_RATE = 0.01;
 	private final static String DEFAULT_DATE_STRING = "01/01/2020";
+	ArrayList<Transaction> transactions = new ArrayList<Transaction>();
 	
 
-	//	1. BankAccount(double balance, double interestRate)
-	public BankAccount(double balance, double interestRate) {
-		this.accountNumber = MeritBank.getNextAccountNumber();
-		this.balance = balance;
-		this.interestRate = interestRate;
-		try {
-			this.openDate = (new SimpleDateFormat("mm/dd/yyyy")).parse(DEFAULT_DATE_STRING);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	//BankAccount(double balance, double interestRate)
+	public BankAccount(double balance, double interestRate) throws ParseException{
+		this(MeritBank.getNextAccountNumber(), balance, interestRate, (new SimpleDateFormat("mm/dd/yyyy")).parse(DEFAULT_DATE_STRING));
 	}
 	
-	public BankAccount(double balance) {
-		this.accountNumber = MeritBank.getNextAccountNumber();
-		this.balance = balance;
-		this.interestRate = DEFAULT_INTEREST_RATE;
-		try {
-			this.openDate = (new SimpleDateFormat("mm/dd/yyyy")).parse(DEFAULT_DATE_STRING);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public BankAccount(double balance) throws ParseException {
+		this(MeritBank.getNextAccountNumber(), balance, DEFAULT_INTEREST_RATE, (new SimpleDateFormat("mm/dd/yyyy")).parse(DEFAULT_DATE_STRING));
 	}
 	
-	// 2. BankAccount(double balance, double interestRate, java.util.Date accountOpenedOn)
+	// BankAccount(double balance, double interestRate, java.util.Date accountOpenedOn)
 	public BankAccount(double balance, double interestRate, Date accountOpenedOn) {
 		this(MeritBank.getNextAccountNumber(), balance, interestRate, accountOpenedOn);
 	}
 
-	//	3. BankAccount(long accountNumber, double balance, double interestRate, java.util.Date getOpenedOn)
+	//BankAccount(long accountNumber, double balance, double interestRate, java.util.Date getOpenedOn)
 	public BankAccount(long accountNumber, double balance, double interestRate, Date accountOpenedOn) {
 		this.accountNumber = accountNumber;
 		this.balance = balance;
@@ -55,42 +38,38 @@ public class BankAccount {
 		this.openDate = accountOpenedOn;
 	}	
 	
-	// 4. java.util.Date getOpenedOn()
+	// java.util.Date getOpenedOn()
 	public Date getOpenedOn() {
 		return this.openDate;
 	}
 	
-	// 5. static BankAccount readFromString(String accountData) throws ParseException
-	//Should throw a java.lang.NumberFormatException if String cannot be correctly parsed
-	public static BankAccount readFromString(String accountData) throws NumberFormatException {
-		final int NUM_FIELDS = 4;
-		String[] field = accountData.split(",");
-		
-		if (field.length != NUM_FIELDS) {
-			throw new NumberFormatException();
-		}
-		
-		BankAccount newBankAccount = null;
+	public static BankAccount readFromString(String accountData) throws ParseException, NumberFormatException {
 		try {
-			DateFormat dateFormat = new SimpleDateFormat("mm/dd/yyyy");
-			newBankAccount = new BankAccount(Long.parseLong(field[0]), Double.parseDouble(field[1]),
-					Double.parseDouble(field[2]), dateFormat.parse(field[3]));
+			String[] holding = accountData.split(",");
+			SimpleDateFormat date = new SimpleDateFormat("dd/MM/yyyy");
+			Long accountNumber = Long.parseLong(holding[0]);
+			double balance = Double.parseDouble(holding[1]);
+			double interestRate = Double.parseDouble(holding[2]);
+			Date accountOpenedOn = date.parse(holding[3]);
+			if (interestRate == 0.01) {
+				return new SavingsAccount(accountNumber, balance, interestRate, accountOpenedOn);
+			} else
+				return new CheckingAccount(accountNumber, balance, interestRate, accountOpenedOn);
+
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return null;
+		} catch (NumberFormatException e) {
+			e.printStackTrace();
+			return null;
 		}
-		catch (NumberFormatException e) {
-			throw e;
-			
-		}
-		catch (ParseException e) {
-			throw new NumberFormatException();
-		}
-		
-		return newBankAccount;
+
 	}
-	
-	//6. String writeToString()
-	public String writeToString() {
+	//String writeToString()
+	public String writeTostring() {
 		DateFormat dateFormat = new SimpleDateFormat("mm/dd/yyyy");
-		return this.accountNumber + "," + this.balance + "," + String.format("%.4f", this.interestRate) + "," + dateFormat.format(this.openDate);
+		return this.accountNumber + "," + this.balance + "," + this.interestRate + "," 
+				+ dateFormat.format(this.openDate);
 	}
 		
 	//***long getAccountNumber() *** from assignment 2
@@ -127,9 +106,25 @@ public class BankAccount {
 			return false;
 		}
 	}
-	//***double futureValue(int years) *** from assignment 2
+	
 	public double futureValue(int years){
 		return this.balance * Math.pow(1+ this.interestRate, years);
 	}
+	public String writeToSpring() {
+
+		SimpleDateFormat dateFormatter = new SimpleDateFormat("MM/dd/yyyy");
+
+		return this.accountNumber + "," + this.balance + "," + this.interestRate + ","
+				+ dateFormatter.format(this.openDate);
+	}
+	public void addTransaction(Transaction transaction) {
+		this.transactions.add(transaction);
+	}
+	
+	public List<Transaction> getTransactions(){
+		return transactions;
+	}
+
 }
+
 
