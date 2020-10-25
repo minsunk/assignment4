@@ -50,8 +50,14 @@ public abstract class Transaction {
 	//public String writeToString() 
 	public String writeToString() {
 		DateFormat dateFormat = new SimpleDateFormat("mm/dd/yyyy");
-		return this.accountNumber + "," + this.balance + "," + String.format("%.4f", this.interestRate) + "," + dateFormat.format(this.openDate);
-	}
+		if (sourceAccount == null && amount > 0) {
+			return "-1," + this.targetAccount.getAccountNumber() + "," + this.amount + "," + dateFormat.format(this.date);
+		} else if(sourceAccount == null && amount < 0) {
+			return "-1," + this.targetAccount.getAccountNumber() + ",-" + this.amount + "," + dateFormat.format(this.date);
+		} else if(sourceAccount != null) {
+			return this.sourceAccount.getAccountNumber() + "," + this.targetAccount.getAccountNumber() + "," + this.amount 
+					+ "," + dateFormat.format(this.date);
+		}
 
 	//public static Transaction readFromString(String transactionDataString) 
 	public static Transaction readFromString(String transactionDataString) throws NumberFormatException {

@@ -134,16 +134,30 @@ public class MeritBank {
 				}
 			int numOfAcctHld = Integer.valueOf(bufferedReader.readLine());
 			AccountHolder [] newAccountHolders = new AccountHolder[numOfAcctHld];
-			for(int i = 0; i<numOfAcctHld; i++) {				
+			for(int i = 0; i < numOfAcctHld; i++) {				
 				AccountHolder acctH = AccountHolder.readFromString(bufferedReader.readLine());
 				int numOfChecking = Integer.valueOf(bufferedReader.readLine());
-					for(int j = 0; j<numOfChecking; j++) {
-						acctH.addCheckingAccount(CheckingAccount.readFromString(bufferedReader.readLine()));				
+					for(int j = 0; j < numOfChecking; j++) {
+						CheckingAccount newCheckingAccount = CheckingAccount.readFromString(bufferedReader.readLine());
+						acctH.addCheckingAccount(newCheckingAccount);			
+						int numOfTransactions = Integer.valueOf(bufferedReader.readLine());
+						for(int k = 0; k < numOfTransactions; k++) {
+							Transaction newTransaction = Transaction.readFromString(bufferedReader.readLine());
+							newCheckingAccount.addTransaction(newTransaction);
+						}
 					}
-				int numOfSavings = Integer.valueOf(bufferedReader.readLine());
-					for(int k = 0; k<numOfSavings; k++) {
-						acctH.addSavingsAccount(SavingsAccount.readFromString(bufferedReader.readLine()));				
+			
+				int numOfSaving = Integer.valueOf(bufferedReader.readLine());
+					for(int j = 0; j < numOfSaving; j++) {
+						SavingsAccount newSavingsAccount = SavingsAccount.readFromString(bufferedReader.readLine());
+						acctH.addSavingsAccount(newSavingsAccount);
+						int numOfTransactions = Integer.valueOf(bufferedReader.readLine());
+						for(int k = 0; k < numOfTransactions; k++) {
+							Transaction newTransaction = Transaction.readFromString(bufferedReader.readLine());
+							newSavingsAccount.addTransaction(newTransaction);
+						}
 					}
+
 				int numOfCD = Integer.valueOf(bufferedReader.readLine());
 					for(int m = 0; m<numOfCD; m++) {
 						acctH.addCDAccount(CDAccount.readFromString(bufferedReader.readLine()));
@@ -186,20 +200,26 @@ public class MeritBank {
 			
 		bufferedWriter.write(String.valueOf(AccountHoldersArray.length));
 		bufferedWriter.newLine();
-			for(int j = 0; j <AccountHoldersArray.length;j++) {
-				bufferedWriter.write(AccountHoldersArray[j].writeToString());
+			for(int i = 0; i <AccountHoldersArray.length;i++) {
+				bufferedWriter.write(AccountHoldersArray[i].writeToString());
 				bufferedWriter.newLine();
-				bufferedWriter.write(String.valueOf(AccountHoldersArray[j].getNumberOfCheckingAccounts()));
+				bufferedWriter.write(String.valueOf(AccountHoldersArray[i].getNumberOfCheckingAccounts()));
 				bufferedWriter.newLine();
-					for(int k = 0; k < AccountHoldersArray[j].getNumberOfCheckingAccounts();k++) {
-							bufferedWriter.write(AccountHoldersArray[j].getCheckingAccounts()[k].writeToString());
-							bufferedWriter.newLine();
-					}
+				for(int j = 0; j < AccountHoldersArray[i].getNumberOfCheckingAccounts();j++) {
+					bufferedWriter.write(AccountHoldersArray[i].getCheckingAccounts()[j].writeToString());
+					bufferedWriter.newLine();
+					for(int k = 0; k < AccountHoldersArray[i].getCheckingAccounts()[j].getTransaction().size(); k++) {
+						bufferedWriter.write(AccountHoldersArray[i].getCheckingAccounts()[j].getTransaction().get(k));
+					}						
+				}
 				bufferedWriter.write(String.valueOf(AccountHoldersArray[j].getNumberOfSavingsAccounts()));
 				bufferedWriter.newLine();
 					for(int m = 0; m < AccountHoldersArray[j].getNumberOfSavingsAccounts();m++) {
 							bufferedWriter.write(AccountHoldersArray[j].getSavingsAccounts()[m].writeToString());
 							bufferedWriter.newLine();
+							for(int n = 0; n < AccountHoldersArray[j].getSavingsAccounts()[m].getTransaction().size(); n++) {
+								bufferedWriter.write(AccountHoldersArray[j].getSavingsAccounts()[m].getTransaction().get(n));
+
 					}
 
 				bufferedWriter.write(String.valueOf(AccountHoldersArray[j].getNumberOfCDAccounts()));
